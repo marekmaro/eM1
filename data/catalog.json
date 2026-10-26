@@ -1,0 +1,68 @@
+{
+  "updatedAt": "2026-10-26",
+  "shops": [
+    { "id": "sklep-a", "name": "Sklep A (przykładowy)", "url": "https://example.com/sklep-a" },
+    { "id": "sklep-b", "name": "Sklep B (przykładowy)", "url": "https://example.com/sklep-b" },
+    { "id": "sklep-c", "name": "Sklep C (przykładowy)", "url": "https://example.com/sklep-c" }
+  ],
+  "products": [
+    {
+      "slug": "marka-a-pla-matt-1kg-czarny",
+      "name": "PLA Matt 1 kg, czarny",
+      "brand": "Marka A",
+      "material": "PLA",
+      "diameterMm": 1.75,
+      "colour": "czarny",
+      "netWeightG": 1000
+    },
+    {
+      "slug": "marka-a-pla-silk-1kg-zloty",
+      "name": "PLA Silk 1 kg, złoty",
+      "brand": "Marka A",
+      "material": "PLA",
+      "diameterMm": 1.75,
+      "colour": "złoty",
+      "netWeightG": 1000
+    },
+    {
+      "slug": "marka-b-pla-basic-1kg-bialy",
+      "name": "PLA Basic 1 kg, biały",
+      "brand": "Marka B",
+      "material": "PLA",
+      "diameterMm": 1.75,
+      "colour": "biały",
+      "netWeightG": 1000
+    },
+    {
+      "slug": "marka-b-petg-1kg-przezroczysty",
+      "name": "PETG 1 kg, przezroczysty",
+      "brand": "Marka B",
+      "material": "PETG",
+      "diameterMm": 1.75,
+      "colour": "przezroczysty",
+      "netWeightG": 1000
+    },
+    {
+      "slug": "marka-c-pla-750g-czerwony",
+      "name": "PLA 750 g, czerwony",
+      "brand": "Marka C",
+      "material": "PLA",
+      "diameterMm": 1.75,
+      "colour": "czerwony",
+      "netWeightG": 750
+    }
+  ],
+  "offers": [
+    { "productSlug": "marka-a-pla-matt-1kg-czarny", "shopId": "sklep-a", "price": 79.0, "url": "https://example.com/sklep-a/pla-matt-czarny", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-a-pla-matt-1kg-czarny", "shopId": "sklep-b", "price": 74.5, "url": "https://example.com/sklep-b/pla-matt-czarny", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-a-pla-matt-1kg-czarny", "shopId": "sklep-c", "price": 69.9, "url": "https://example.com/sklep-c/pla-matt-czarny", "inStock": false, "updatedAt": "2026-10-25" },
+    { "productSlug": "marka-a-pla-silk-1kg-zloty", "shopId": "sklep-a", "price": 89.0, "url": "https://example.com/sklep-a/pla-silk-zloty", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-a-pla-silk-1kg-zloty", "shopId": "sklep-c", "price": 84.0, "url": "https://example.com/sklep-c/pla-silk-zloty", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-b-pla-basic-1kg-bialy", "shopId": "sklep-b", "price": 62.0, "url": "https://example.com/sklep-b/pla-basic-bialy", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-b-pla-basic-1kg-bialy", "shopId": "sklep-c", "price": 64.5, "url": "https://example.com/sklep-c/pla-basic-bialy", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-b-petg-1kg-przezroczysty", "shopId": "sklep-a", "price": 95.0, "url": "https://example.com/sklep-a/petg-przezroczysty", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-b-petg-1kg-przezroczysty", "shopId": "sklep-b", "price": 89.9, "url": "https://example.com/sklep-b/petg-przezroczysty", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-c-pla-750g-czerwony", "shopId": "sklep-a", "price": 52.0, "url": "https://example.com/sklep-a/pla-750-czerwony", "inStock": true, "updatedAt": "2026-10-26" },
+    { "productSlug": "marka-c-pla-750g-czerwony", "shopId": "sklep-b", "price": 49.0, "url": "https://example.com/sklep-b/pla-750-czerwony", "inStock": true, "updatedAt": "2026-10-26" }
+  ]
+}
