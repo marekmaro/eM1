@@ -21,6 +21,7 @@ export const niche = {
       { label: "Produkty", href: "/products" },
       { label: "Sklepy", href: "/sklepy" },
       { label: "Statystyki", href: "/statystyki" },
+      { label: "Blog", href: "/blog" },
     ],
     tools: [
       { label: "Kalkulator kosztu wydruku", href: "/tools/print-cost" },

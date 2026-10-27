@@ -1308,3 +1308,96 @@ code {
     min-width: 560px;
   }
 }
+
+/* ---------- Blog ---------- */
+.post-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+}
+
+.post-card h2 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.article {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.article-head h1 {
+  margin-top: 6px;
+}
+
+.article-cta {
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.prose {
+  font-size: 1.02rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.prose h2 {
+  margin: 36px 0 10px;
+  font-size: 1.35rem;
+}
+
+.prose h3 {
+  margin: 24px 0 8px;
+}
+
+.prose p,
+.prose ul,
+.prose ol {
+  margin: 0 0 16px;
+}
+
+.prose li {
+  margin: 4px 0;
+}
+
+.prose a {
+  color: var(--accent);
+}
+
+.prose table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  margin: 16px 0 24px;
+  border-radius: var(--radius);
+}
+
+.prose code {
+  font-size: 0.9em;
+}
+
+.prose blockquote {
+  margin: 16px 0;
+  padding: 10px 16px;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 10px 10px 0;
+}

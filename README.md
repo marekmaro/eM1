@@ -69,6 +69,7 @@ docker compose up -d --build # aplikacja na 127.0.0.1:3000
 Konfiguracja:
 - `ADMIN_PASSWORD`: hasło do logowania.
 - `ADMIN_SESSION_SECRET`: minimum 32 znaki losowe, np. `openssl rand -hex 32`.
+- `SITE_URL`: publiczny adres serwisu, używany w mapie strony i robots.txt.
 - `TRUST_PROXY=1`: tylko za reverse proxy, który dopisuje `X-Forwarded-For` albo `X-Real-IP`.
 
 Bez obu zmiennych logowanie jest wyłączone. Sesja to podpisany cookie: HttpOnly, SameSite=Strict, ważny 8 godzin.
@@ -95,6 +96,14 @@ Bez obu zmiennych logowanie jest wyłączone. Sesja to podpisany cookie: HttpOnl
 - `app/(site)/`: strony publiczne. `app/admin/`: panel. `app/go/`: przekierowania ze zliczaniem.
 - `next.config.mjs`: nagłówki bezpieczeństwa (CSP, HSTS, X-Frame-Options i inne).
 - `components/Logo.tsx`: znak i nazwa marki. `public/icon.svg`: favikona.
+
+## Blog i poradniki
+
+Artykuły są w `content/blog/<slug>.md` i zaczynają się od nagłówka z `title`, `description`, `date` (RRRR-MM-DD),
+`tags` oraz opcjonalnie `material` (wtedy pod artykułem pojawia się przycisk do katalogu tego materiału).
+Błędny nagłówek przerywa build, więc artykuł nie zniknie po cichu. Strony bloga są statyczne.
+
+Adres serwisu w mapie strony i `robots.txt` bierze się z `SITE_URL` (np. `https://example.pl`). Ustaw go w `.env`.
 
 ## Jak dodać nową niszę
 
