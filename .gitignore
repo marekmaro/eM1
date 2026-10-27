@@ -30,3 +30,17 @@
 *.exe
 *.out
 *.app
+
+# Dependencies and build output
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+.env*.local
+
+# Dane runtime panelu (statystyki, zgłoszenia, dziennik). Nie trafiają do repozytorium.
+data/clicks.json
+data/reports.json
+data/audit.log
+data/*.tmp
