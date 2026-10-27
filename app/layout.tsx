@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     template: `%s · ${niche.brand.name}`,
   },
   description: niche.brand.tagline,
+  icons: { icon: "/icon.svg" },
 };
 
 export const viewport: Viewport = {

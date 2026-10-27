@@ -36,7 +36,7 @@ export default async function AdminProductPage({ params, searchParams }: Props) 
   return (
     <>
       <p>
-        <Link href="/admin">← Wróć do dashboardu</Link>
+        <Link href="/admin/products">← Produkty</Link>
       </p>
       <h1>
         <span className="inline-row">
@@ -95,13 +95,19 @@ export default async function AdminProductPage({ params, searchParams }: Props) 
                     Zapisz
                   </button>
                 </form>
-                <form action={deleteOfferAction}>
-                  <input type="hidden" name="productSlug" value={product.slug} />
-                  <input type="hidden" name="shopId" value={offer.shopId} />
-                  <button className="button button-danger button-small" type="submit">
-                    Usuń ofertę
-                  </button>
-                </form>
+                <details className="danger-details">
+                  <summary>Usuń ofertę</summary>
+                  <form action={deleteOfferAction} className="form-inline">
+                    <input type="hidden" name="productSlug" value={product.slug} />
+                    <input type="hidden" name="shopId" value={offer.shopId} />
+                    <label className="checkbox">
+                      <input name="confirm" type="checkbox" required /> Potwierdzam
+                    </label>
+                    <button className="button button-danger button-small" type="submit">
+                      Usuń
+                    </button>
+                  </form>
+                </details>
               </div>
             );
           })}

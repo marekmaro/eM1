@@ -1,121 +1,141 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AdminNotice } from "@/components/AdminNotice";
-import { ColourDot } from "@/components/ColourDot";
-import { ProductFields } from "@/components/ProductFields";
 import { niche } from "@/config/niche";
-import { getBestOffer, getCatalog } from "@/lib/catalog";
-import { formatUnitPrice } from "@/lib/pricing";
-import { createProductAction, createShopAction } from "../actions";
+import { catalogTotals } from "@/lib/analytics";
+import { getCatalog } from "@/lib/catalog";
+import { clickSummary } from "@/lib/stats";
+import { readAudit } from "@/lib/audit";
+import { getHealth, type Status } from "@/lib/health";
+import { listReports } from "@/lib/reports";
+import { BarChart } from "@/components/BarChart";
+import { AdminNotice } from "@/components/AdminNotice";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "Pulpit",
   robots: { index: false, follow: false },
 };
 
-export default async function AdminDashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string; saved?: string }>;
-}) {
-  const { error, saved } = await searchParams;
+const STATUS_LABEL: Record<Status, string> = {
+  ok: "w porządku",
+  warn: "uwaga",
+  error: "błąd",
+};
+
+export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   const catalog = getCatalog();
-  const inStock = catalog.offers.filter((offer) => offer.inStock).length;
+  const totals = catalogTotals(catalog);
+  const health = getHealth();
+  const clicks = clickSummary();
+  const openReports = listReports().filter((report) => report.status === "open").slice(0, 3);
+  const recent = readAudit(6);
 
   return (
     <>
-      <h1>Dashboard</h1>
-      <AdminNotice error={error} saved={saved} />
+      <div className="page-head">
+        <div>
+          <h1>Pulpit</h1>
+          <p className="lead">Stan katalogu, kondycja serwisu i ostatnie zdarzenia.</p>
+        </div>
+        <div className="page-actions">
+          <Link className="button" href="/admin/products/new">
+            Nowy produkt
+          </Link>
+          <Link className="button button-ghost" href="/admin/import">
+            Import CSV
+          </Link>
+        </div>
+      </div>
+      <AdminNotice error={error} />
 
       <div className="stats">
-        <Stat value={catalog.products.length} label="produktów" />
-        <Stat value={catalog.shops.length} label="sklepów" />
-        <Stat value={catalog.offers.length} label="ofert" />
-        <Stat value={inStock} label="dostępnych ofert" />
+        <Stat value={totals.products} label="produktów" />
+        <Stat value={totals.shops} label="sklepów" />
+        <Stat value={totals.offersInStock} label={`dostępnych z ${totals.offers} ofert`} />
+        <Stat value={clicks.last7} label="kliknięć w 7 dni" />
       </div>
 
-      <h2>Produkty</h2>
-      {catalog.products.length === 0 ? (
-        <p className="muted">Brak produktów. Dodaj pierwszy poniżej.</p>
-      ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Produkt</th>
-                <th>Materiał</th>
-                <th>Najniżej za {niche.unit.label}</th>
-                <th>Oferty</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {catalog.products.map((product) => {
-                const best = getBestOffer(product.slug);
-                const offerCount = catalog.offers.filter((offer) => offer.productSlug === product.slug).length;
-                return (
-                  <tr key={product.slug}>
-                    <td>
-                      <span className="inline-row">
-                        <ColourDot colour={product.colour} />
-                        {product.name}
-                      </span>
-                    </td>
-                    <td>{product.material}</td>
-                    <td className="price">{best ? formatUnitPrice(best.pricePerKg) : "brak"}</td>
-                    <td>{offerCount}</td>
-                    <td>
-                      <Link href={`/admin/products/${product.slug}`}>Edytuj →</Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="grid two-col">
+      <div className="grid two-col dashboard-grid">
         <section className="card">
-          <h2>Nowy produkt</h2>
-          <form action={createProductAction} className="form-stack">
-            <ProductFields idPrefix="new" />
-            <button className="button" type="submit">
-              Dodaj produkt
-            </button>
-          </form>
+          <div className="card-head">
+            <h2>Kondycja serwisu</h2>
+            <span className={`status-pill status-${health.status}`}>{STATUS_LABEL[health.status]}</span>
+          </div>
+          <ul className="check-list">
+            {health.checks.map((check) => (
+              <li key={check.label}>
+                <span className={`dot dot-${check.status}`} aria-hidden="true" />
+                <div>
+                  <strong>{check.label}</strong>
+                  <div className="muted">{check.detail}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="card">
-          <h2>Sklepy</h2>
-          {catalog.shops.length > 0 && (
+          <h2>Kliknięcia w sklepy (30 dni)</h2>
+          <BarChart data={clicks.daily.map((day) => ({ label: day.date, value: day.count }))} label={`Razem: ${clicks.last30}`} />
+          <h3>Najczęściej klikane</h3>
+          {clicks.topOffers.length === 0 ? (
+            <p className="muted">Brak kliknięć. Licznik ruszy, gdy użytkownicy przejdą do sklepu.</p>
+          ) : (
+            <ol className="plain-list">
+              {clicks.topOffers.slice(0, 5).map((row) => (
+                <li key={`${row.productSlug}-${row.shopId}`}>
+                  <Link href={`/admin/products/${row.productSlug}`}>{row.productSlug}</Link>{" "}
+                  <span className="muted">· {row.shopId} · {row.count}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      </div>
+
+      <div className="grid two-col dashboard-grid">
+        <section className="card">
+          <div className="card-head">
+            <h2>Zgłoszenia do sprawdzenia</h2>
+            <Link href="/admin/reports">Wszystkie →</Link>
+          </div>
+          {openReports.length === 0 ? (
+            <p className="muted">Brak otwartych zgłoszeń.</p>
+          ) : (
             <ul className="plain-list">
-              {catalog.shops.map((shop) => (
-                <li key={shop.id}>
-                  <strong>{shop.name}</strong> <span className="muted">({shop.id})</span>
+              {openReports.map((report) => (
+                <li key={report.id}>
+                  <strong>{report.productSlug}</strong> <span className="muted">· {report.shopId}</span>
+                  <div className="muted">{report.message.slice(0, 140)}</div>
                 </li>
               ))}
             </ul>
           )}
-          <form action={createShopAction} className="form-stack">
-            <div className="field">
-              <label htmlFor="shop-id">Identyfikator (slug)</label>
-              <input id="shop-id" name="id" required maxLength={120} pattern="[a-z0-9]+(-[a-z0-9]+)*" />
-            </div>
-            <div className="field">
-              <label htmlFor="shop-name">Nazwa</label>
-              <input id="shop-name" name="name" required maxLength={120} />
-            </div>
-            <div className="field">
-              <label htmlFor="shop-url">Adres sklepu (https://)</label>
-              <input id="shop-url" name="url" type="url" required maxLength={500} />
-            </div>
-            <button className="button button-secondary" type="submit">
-              Dodaj sklep
-            </button>
-          </form>
+        </section>
+
+        <section className="card">
+          <div className="card-head">
+            <h2>Ostatnie zdarzenia</h2>
+            <Link href="/admin/audit">Dziennik →</Link>
+          </div>
+          {recent.length === 0 ? (
+            <p className="muted">Brak zdarzeń.</p>
+          ) : (
+            <ul className="plain-list compact">
+              {recent.map((entry) => (
+                <li key={`${entry.at}-${entry.action}-${entry.target}`}>
+                  <span className="muted">{entry.at.slice(0, 16).replace("T", " ")}</span> {entry.action}{" "}
+                  <span className="muted">{entry.target}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
+
+      <p className="disclaimer">
+        Katalog z dnia {totals.updatedAt}. {niche.disclaimer}
+      </p>
     </>
   );
 }

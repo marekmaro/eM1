@@ -6,14 +6,20 @@ const ERRORS = new Map<string, string>([
   ["duplicate", "Rekord o tym kluczu już istnieje."],
   ["missing", "Nie znaleziono rekordu."],
   ["shop", "Wybrany sklep nie istnieje."],
-  ["confirm", "Zaznacz potwierdzenie, aby usunąć."],
+  ["confirm", "Zaznacz potwierdzenie, aby wykonać operację."],
+  ["shop_has_offers", "Sklep ma oferty. Najpierw usuń lub przenieś jego oferty."],
+  ["empty_import", "Wklej dane do importu."],
+  ["import", "Import nie został zapisany. Popraw błędy poniżej i spróbuj ponownie."],
 ]);
 
 const SAVED = new Map<string, string>([
   ["product", "Zapisano produkt."],
   ["offer", "Zapisano ofertę."],
-  ["shop", "Dodano sklep."],
+  ["shop", "Zapisano sklep."],
   ["deleted", "Usunięto."],
+  ["stock", "Zmieniono dostępność."],
+  ["report", "Zgłoszenie zaktualizowane."],
+  ["stats", "Statystyki kliknięć wyzerowane."],
 ]);
 
 export function AdminNotice({ error, saved }: { error?: string; saved?: string }) {

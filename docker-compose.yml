@@ -1,0 +1,13 @@
+services:
+  nitkomat:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Ustaw 1 tylko wtedy, gdy serwis stoi za reverse proxy (np. Caddy), który dopisuje X-Forwarded-For.
+      TRUST_PROXY: "${TRUST_PROXY:-0}"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./data:/app/data

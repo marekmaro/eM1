@@ -52,6 +52,13 @@ export const offerSchema = z.object({
   updatedAt: z.string().regex(DATE_PATTERN),
 });
 
+// Zgłoszenie od użytkownika. Pole "website" to pułapka dla botów (musi być puste).
+export const reportSchema = z.object({
+  productSlug: slugSchema,
+  shopId: slugSchema,
+  message: z.string().trim().min(10, "Opis musi mieć co najmniej 10 znaków").max(500),
+});
+
 // Sprawdza spójność całego katalogu: unikalne klucze i brak osieroconych ofert.
 export const catalogSchema = z
   .object({

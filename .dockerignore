@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+data/clicks.json
+data/reports.json
+data/audit.log
+data/*.tmp
+*.log

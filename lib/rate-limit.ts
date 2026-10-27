@@ -32,3 +32,4 @@ export function createRateLimiter(maxAttempts: number, windowMs: number) {
 }
 
 export const loginLimiter = createRateLimiter(5, 15 * 60 * 1000);
+export const reportLimiter = createRateLimiter(5, 60 * 60 * 1000);

@@ -1,5 +1,7 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { ColourDot } from "@/components/ColourDot";
+import { colourToHex } from "@/lib/colours";
 import { formatUnitPrice } from "@/lib/pricing";
 import type { Product, RankedOffer } from "@/lib/types";
 
@@ -12,8 +14,11 @@ export function ProductCard({
   best?: RankedOffer;
   badge?: string;
 }) {
+  // Kolor filamentu idzie na górną krawędź karty, dzięki czemu katalog wygląda jak półka z szpulami.
+  const style = { "--swatch": colourToHex(product.colour) } as CSSProperties;
+
   return (
-    <Link href={`/products/${product.slug}`} className={`product-card${badge ? " featured" : ""}`}>
+    <Link href={`/products/${product.slug}`} className={`product-card${badge ? " featured" : ""}`} style={style}>
       <div className="product-card-top">
         <ColourDot colour={product.colour} />
         <span className="chip">{product.material}</span>

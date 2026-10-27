@@ -2,10 +2,27 @@ import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { SpoolHero } from "@/components/SpoolHero";
 import { niche } from "@/config/niche";
+import { catalogTotals } from "@/lib/analytics";
 import { getBestOffer, getCatalog, getProducts } from "@/lib/catalog";
+
+const STEPS = [
+  {
+    title: "Przeliczamy na kilogram",
+    text: "Gramatura, średnica i cena szpuli trafiają do jednej jednostki. Porównujesz to, co naprawdę kosztuje.",
+  },
+  {
+    title: "Pokazujemy najtańszy sklep",
+    text: "Oferty są posortowane od najniższej ceny. Dostępne są na górze, a brak towaru wyraźnie oznaczamy.",
+  },
+  {
+    title: "Kupujesz w sklepie",
+    text: "Klikasz przejście do sklepu i płacisz tam. Cena w sklepie jest wiążąca, nie nasza.",
+  },
+];
 
 export default function HomePage() {
   const catalog = getCatalog();
+  const totals = catalogTotals(catalog);
 
   const cheapest = getProducts()
     .map((product) => ({ product, best: getBestOffer(product.slug) }))
@@ -27,8 +44,8 @@ export default function HomePage() {
             <Link className="button" href="/products">
               Przeglądaj produkty
             </Link>
-            <Link className="button button-ghost" href="/tools/print-cost">
-              Kalkulator kosztu
+            <Link className="button button-ghost" href="/statystyki">
+              Ceny w liczbach
             </Link>
           </div>
         </div>
@@ -36,10 +53,10 @@ export default function HomePage() {
       </section>
 
       <div className="stats">
-        <Stat value={getProducts().length} label="produktów" />
-        <Stat value={catalog.shops.length} label="sklepów" />
-        <Stat value={catalog.offers.length} label="ofert" />
-        <Stat value={catalog.updatedAt} label="dane z dnia" />
+        <Stat value={totals.products} label="produktów" />
+        <Stat value={totals.shops} label="sklepów" />
+        <Stat value={totals.offersInStock} label="dostępnych ofert" />
+        <Stat value={totals.updatedAt.split("-").reverse().join(".")} label="dane z dnia" />
       </div>
 
       <h2>Najtańsze oferty za {niche.unit.label}</h2>
@@ -57,6 +74,17 @@ export default function HomePage() {
           ))}
         </div>
       )}
+
+      <h2>Jak to działa</h2>
+      <div className="grid steps">
+        {STEPS.map((step, index) => (
+          <div className="card step" key={step.title}>
+            <span className="step-number">{index + 1}</span>
+            <h3>{step.title}</h3>
+            <p className="muted">{step.text}</p>
+          </div>
+        ))}
+      </div>
 
       <h2>Narzędzia</h2>
       <div className="grid">

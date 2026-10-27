@@ -5,71 +5,86 @@ zmianie konfiguracji i danych obsłużyć inną niszę.
 
 Dane w repozytorium są przykładowe i wymyślone (sklepy i marki z prefiksem „przykładowy”).
 
-## Uruchomienie
+Audyt bezpieczeństwa: [docs/security-audit.md](docs/security-audit.md).
+
+## Uruchomienie lokalnie
 
 ```bash
 npm install
 cp .env.example .env.local   # uzupełnij klucze panelu admina
 npm run dev                  # http://localhost:3000
 npm run typecheck
-npm run build
+npm run build && npm start   # wersja produkcyjna
 ```
 
 Wymagany Node.js 20.9 lub nowszy (Next.js 16).
 
-## Panel administratora
+## Wdrożenie
 
-Panel jest pod `/admin`. Działa tylko po ustawieniu dwóch zmiennych środowiskowych:
+```bash
+cp .env.example .env         # ADMIN_PASSWORD, ADMIN_SESSION_SECRET, TRUST_PROXY=1 za proxy
+docker compose up -d --build # aplikacja na 127.0.0.1:3000
+```
 
+- Dane są w `./data` (montowane jako wolumen). Ten katalog musi być zapisywalny przez użytkownika w kontenerze (UID
+  z obrazu `node:22-alpine`, użytkownik `app`), inaczej panel nie zapisze zmian.
+- HTTPS zapewnia reverse proxy. Przykład dla Caddy: `Caddyfile.example`.
+- Kopię zapasową rób z `./data` albo z eksportu JSON w panelu (Ustawienia).
+
+## Panel administratora (`/admin`)
+
+- **Pulpit:** liczby, kondycja serwisu (katalog, świeżość cen, dostępność, pokrycie, zgłoszenia, zapis danych,
+  pamięć), wykres kliknięć z 30 dni, ostatnie zdarzenia.
+- **Produkty:** lista z wyszukiwaniem, dodawanie, edycja, usuwanie z potwierdzeniem.
+- **Oferty:** lista z filtrami (starsze niż 7 dni, niedostępne), zmiana dostępności jednym kliknięciem.
+- **Import CSV:** wklej dane od sklepów (średnik lub przecinek, polskie ceny). Zapis tylko gdy wszystkie wiersze są
+  poprawne, a błędy są wypisane z numerem wiersza.
+- **Sklepy:** nazwa i adres, usuwanie tylko bez ofert.
+- **Zgłoszenia:** błędne ceny zgłoszone przez użytkowników, z oznaczaniem jako rozwiązane.
+- **Statystyki:** kliknięcia dziennie, najczęściej klikane oferty, sklepy i materiały, największe różnice cen.
+- **Dziennik:** logowania i zmiany w danych (bez haseł i adresów IP).
+- **Ustawienia:** eksport ofert (CSV) i katalogu (JSON), wyzerowanie liczników z potwierdzeniem.
+
+Konfiguracja:
 - `ADMIN_PASSWORD`: hasło do logowania.
 - `ADMIN_SESSION_SECRET`: minimum 32 znaki losowe, np. `openssl rand -hex 32`.
+- `TRUST_PROXY=1`: tylko za reverse proxy, który dopisuje `X-Forwarded-For` albo `X-Real-IP`.
 
-Bez obu zmiennych logowanie jest wyłączone.
+Bez obu zmiennych logowanie jest wyłączone. Sesja to podpisany cookie: HttpOnly, SameSite=Strict, ważny 8 godzin.
 
-Zabezpieczenia:
-- Każda strona i akcja w panelu sprawdza sesję (proxy to pierwsza linia obrony, nie jedyna).
-- Sesja to podpisany HMAC cookie: `HttpOnly`, `SameSite=Strict`, `Secure` w produkcji, ważna 8 godzin.
-- Porównanie hasła jest odporne na ataki czasowe. Po 5 nieudanych próbach logowanie jest blokowane na 15 minut.
-- Wszystkie zapisy przechodzą przez walidację (zod). Linki w ofertach akceptują tylko `http(s)`.
-- Panel jest oznaczony `noindex` i wykluczony w `robots.txt`.
+## Strony publiczne
 
-Ograniczenia v0:
-- Dane zapisywane są do `data/catalog.json` (plik tymczasowy + rename). To działa na jednym serwerze z trwałym
-  dyskiem. Na platformach bez trwałego systemu plików (np. Vercel) trzeba najpierw przenieść dane do bazy.
-- Limit logowania działa w pamięci procesu. Przy kilku instancjach trzeba użyć wspólnego magazynu.
-- Adres IP do limitu brany jest z `X-Forwarded-For`. Za reverse proxy ustaw go tak, żeby klient nie mógł go podrobić.
+- `/products`: filtry (szukaj, materiał, kolor, tylko dostępne), sortowanie.
+- `/products/[slug]`: oferty z paskiem porównania, linki przez licznik kliknięć, formularz „Zgłoś błędną cenę”.
+- `/sklepy`: który sklep najczęściej ma najniższą cenę i jak bardzo jego ceny odbiegają.
+- `/statystyki`: średnie ceny za materiał i największe różnice cen.
+- `/tools/print-cost`: kalkulator kosztu materiału w wydruku.
+- `/go/[slug]/[shopId]`: przekierowanie do sklepu z licznikiem kliknięć. Cel pochodzi tylko z katalogu.
 
 ## Struktura
 
-- `config/niche.ts`: jedyny plik opisujący niszę. Nazwa, jednostka przeliczeniowa, filtry materiałów, nawigacja,
-  dane prawne i zastrzeżenia.
-- `data/catalog.json`: sklepy, produkty i oferty. Docelowo zastąpi go baza, a scrapery lub feedy będą ją zasilać.
-- `lib/schema.ts`: walidacja danych, także spójność katalogu (brak osieroconych ofert, unikalne klucze).
-- `lib/catalog.ts`: dostęp i zapis danych. Strony korzystają tylko z tego modułu.
-- `lib/pricing.ts`: przeliczanie ceny na jednostkę i formatowanie w złotówkach.
-- `lib/session.ts`, `lib/admin-auth.ts`, `lib/rate-limit.ts`: logowanie i ochrona panelu.
-- `proxy.ts`: ochrona `/admin` (Next.js 16 zamiast `middleware.ts`).
-- `app/(site)/`: strony publiczne (strona główna, katalog, karta produktu, kalkulator, regulamin, polityka prywatności).
-- `app/admin/`: logowanie i panel (dashboard, edycja produktu, oferty, sklepy).
+- `config/niche.ts`: jedyny plik opisujący niszę. Nazwa, jednostka przeliczeniowa, materiały, nawigacja, dane prawne.
+- `data/catalog.json`: sklepy, produkty i oferty. Runtime: `clicks.json`, `reports.json`, `audit.log` (w `.gitignore`).
+- `lib/schema.ts`: walidacja danych, w tym spójność katalogu (brak osieroconych ofert, unikalne klucze).
+- `lib/catalog.ts`, `lib/store.ts`: dostęp do danych. Zapis atomowy (plik tymczasowy + rename).
+- `lib/analytics.ts`, `lib/health.ts`, `lib/stats.ts`, `lib/reports.ts`, `lib/audit.ts`: statystyki, kondycja, dane runtime.
+- `lib/offers-csv.ts`: import i eksport CSV z ochroną przed formułami.
+- `lib/session.ts`, `lib/admin-auth.ts`, `lib/rate-limit.ts`, `lib/client-key.ts`: logowanie i limity.
+- `proxy.ts`: ochrona `/admin`. Każda strona i akcja w panelu sprawdza sesję jeszcze raz.
+- `app/(site)/`: strony publiczne. `app/admin/`: panel. `app/go/`: przekierowania ze zliczaniem.
 - `next.config.mjs`: nagłówki bezpieczeństwa (CSP, HSTS, X-Frame-Options i inne).
+- `components/Logo.tsx`: znak i nazwa marki. `public/icon.svg`: favikona.
 
 ## Jak dodać nową niszę
 
-1. Zmień wartości w `config/niche.ts` (nazwa, jednostka, materiały, nawigacja).
-2. Podmień `data/catalog.json` na dane nowej niszy. Model danych pozostaje ten sam.
-3. Dodaj lub usuń narzędzia w sekcji `navigation.tools` i odpowiadające im strony w `app/(site)/tools/`.
+1. Zmień wartości w `config/niche.ts` (nazwa, jednostka, materiały, nawigacja, dane prawne).
+2. Podmień `data/catalog.json` na dane nowej niszy, albo zaimportuj oferty w panelu. Model danych pozostaje ten sam.
+3. Dodaj lub usuń narzędzia w `navigation.tools` i odpowiadające im strony w `app/(site)/tools/`.
 
-## Bezpieczeństwo zależności
+## Ograniczenia obecnej wersji
 
-Stan z ostatniego sprawdzenia: `npm audit --omit=dev` zgłasza 0 podatności. Next.js 14.2.x miał krytyczne podatności
-bez poprawek w tej linii, dlatego projekt działa na Next.js 16 i React 19. Przy aktualizacjach uruchamiaj `npm audit`.
-
-## Do zrobienia przed startem
-
-- Scrapery lub importy feedów sklepów (osobny moduł na każdy sklep).
-- Baza danych zamiast pliku JSON.
-- Konta użytkowników, alerty mailowe i zapisywanie historii cen.
-- Płatności Premium.
-- Regulamin i polityka prywatności (obecnie tylko placeholdery), dane operatora w `config/niche.ts`.
-- Sitemap i dane strukturalne SEO.
-- Cookies: po dodaniu analityki potrzebny baner zgody.
+- Dane są w plikach JSON. Zapisy zakładają jeden proces. Przy kilku instancjach trzeba przejść na bazę.
+- Limity prób działają w pamięci procesu.
+- Brak scraperów i feedów sklepów: ceny wprowadzasz ręcznie lub przez import CSV.
+- Brak alertów cenowych, konta użytkownika i płatności Premium (przycisk jest zablokowany jako „wkrótce”).
+- Regulamin i polityka prywatności to placeholdery. Przed startem musi je przygotować prawnik.

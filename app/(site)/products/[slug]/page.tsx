@@ -1,31 +1,40 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ColourDot } from "@/components/ColourDot";
+import { PriceBar } from "@/components/PriceBar";
 import { niche } from "@/config/niche";
-import { getProductBySlug, getProducts, getRankedOffers } from "@/lib/catalog";
+import { getCatalog, rankedOffersFor } from "@/lib/catalog";
 import { formatPLN, formatUnitPrice } from "@/lib/pricing";
+import { reportOfferAction } from "./actions";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ report?: string }>;
 }
 
-export function generateStaticParams() {
-  return getProducts().map((product) => ({ slug: product.slug }));
-}
+const REPORT_MESSAGES = new Map<string, string>([
+  ["sent", "Dziękujemy. Zgłoszenie trafiło do sprawdzenia."],
+  ["limit", "Wysłano już kilka zgłoszeń. Spróbuj ponownie później."],
+  ["invalid", "Nie udało się wysłać zgłoszenia. Opisz problem w co najmniej 10 znakach."],
+]);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = getCatalog().products.find((item) => item.slug === slug);
   return { title: product?.name ?? "Produkt" };
 }
 
-export default async function ProductPage({ params }: Props) {
+export default async function ProductPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const { report } = await searchParams;
+
+  const catalog = getCatalog();
+  const product = catalog.products.find((item) => item.slug === slug);
   if (!product) notFound();
 
-  const offers = getRankedOffers(product.slug);
-  const best = offers.find((offer) => offer.inStock);
+  const offers = rankedOffersFor(catalog, product.slug);
+  const inStock = offers.filter((offer) => offer.inStock);
+  const best = inStock[0];
 
   return (
     <>
@@ -50,7 +59,12 @@ export default async function ProductPage({ params }: Props) {
           {best && <div className="muted">w {best.shopName}</div>}
         </div>
         {best && (
-          <a className="button" href={best.url} target="_blank" rel="sponsored nofollow noopener noreferrer">
+          <a
+            className="button"
+            href={`/go/${product.slug}/${best.shopId}`}
+            target="_blank"
+            rel="sponsored nofollow noopener noreferrer"
+          >
             Do sklepu
           </a>
         )}
@@ -67,6 +81,7 @@ export default async function ProductPage({ params }: Props) {
                 <th>Sklep</th>
                 <th>Cena (bez dostawy)</th>
                 <th>Za {niche.unit.label}</th>
+                <th>Porównanie</th>
                 <th>Dostępność</th>
                 <th>Aktualizacja</th>
                 <th />
@@ -79,6 +94,9 @@ export default async function ProductPage({ params }: Props) {
                   <td className="price">{formatPLN(offer.price)}</td>
                   <td className="price">{formatUnitPrice(offer.pricePerKg)}</td>
                   <td>
+                    {offer.inStock && best ? <PriceBar value={offer.pricePerKg} min={best.pricePerKg} /> : "—"}
+                  </td>
+                  <td>
                     <span className={offer.inStock ? "status status-ok" : "status"}>
                       {offer.inStock ? "Dostępny" : "Brak"}
                     </span>
@@ -86,7 +104,11 @@ export default async function ProductPage({ params }: Props) {
                   <td className="muted">{offer.updatedAt}</td>
                   <td>
                     {offer.url !== "#" && (
-                      <a href={offer.url} target="_blank" rel="sponsored nofollow noopener noreferrer">
+                      <a
+                        href={`/go/${product.slug}/${offer.shopId}`}
+                        target="_blank"
+                        rel="sponsored nofollow noopener noreferrer"
+                      >
                         Do sklepu →
                       </a>
                     )}
@@ -101,13 +123,47 @@ export default async function ProductPage({ params }: Props) {
 
       <div className="grid two-col">
         <section className="card">
-          <h2>Historia cen</h2>
-          <p className="muted">Wykres pojawi się, gdy zbierzemy historię cen z kolejnych odświeżeń danych.</p>
+          <h2>Zgłoś błędną cenę</h2>
+          {report && REPORT_MESSAGES.has(report) && (
+            <div className={report === "sent" ? "notice notice-ok" : "notice notice-error"} role="status">
+              {REPORT_MESSAGES.get(report)}
+            </div>
+          )}
+          {offers.length === 0 ? (
+            <p className="muted">Brak ofert do zgłoszenia.</p>
+          ) : (
+            <form action={reportOfferAction} className="form-stack">
+              <input type="hidden" name="productSlug" value={product.slug} />
+              <div className="field">
+                <label htmlFor="report-shop">Sklep</label>
+                <select id="report-shop" name="shopId" required>
+                  {offers.map((offer) => (
+                    <option key={offer.shopId} value={offer.shopId}>
+                      {offer.shopName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="report-message">Co się nie zgadza? (10–500 znaków)</label>
+                <textarea id="report-message" name="message" required minLength={10} maxLength={500} rows={3} />
+              </div>
+              {/* Pułapka dla botów: ukryte pole, którego człowiek nie widzi ani nie wypełnia. */}
+              <div className="hp" aria-hidden="true">
+                <label htmlFor="report-website">Nie wypełniaj</label>
+                <input id="report-website" name="website" tabIndex={-1} autoComplete="off" />
+              </div>
+              <button className="button button-secondary" type="submit">
+                Wyślij zgłoszenie
+              </button>
+            </form>
+          )}
         </section>
+
         <section className="card">
           <h2>Alert cenowy</h2>
           <p className="muted">
-            Powiadomienie, gdy cena za {niche.unit.label} spadnie poniżej wybranej wartości.
+            Powiadomienie, gdy cena za {niche.unit.label} spadnie poniżej wybranej wartości. Funkcja w przygotowaniu.
           </p>
           <button className="button" disabled>
             Wkrótce
