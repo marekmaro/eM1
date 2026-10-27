@@ -1,26 +1,39 @@
-import catalogData from "@/data/catalog.json";
+import { readFileSync, renameSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { unitPrice } from "@/lib/pricing";
+import { catalogSchema } from "@/lib/schema";
+import { safeHref } from "@/lib/url";
 import type { Catalog, Product, RankedOffer } from "@/lib/types";
 
-// Na razie dane są w pliku JSON. Później ten moduł zamienimy na bazę,
-// bez zmian w stronach, które z niego korzystają.
-const catalog = catalogData as Catalog;
+// Źródło danych to plik JSON. Czytamy go przy każdym wywołaniu, żeby zmiany z panelu
+// admina były widoczne po revalidacji. Plik jest mały, więc koszt jest pomijalny.
+// Gdy pojawi się baza, zmieniamy tylko ten moduł.
+const CATALOG_PATH = path.join(process.cwd(), "data", "catalog.json");
 
 export function getCatalog(): Catalog {
-  return catalog;
+  return catalogSchema.parse(JSON.parse(readFileSync(CATALOG_PATH, "utf8")));
+}
+
+export function saveCatalog(catalog: Catalog): void {
+  const valid = catalogSchema.parse(catalog);
+  // Zapis przez plik tymczasowy i rename, żeby przerwany zapis nie uszkodził katalogu.
+  const tmpPath = `${CATALOG_PATH}.${process.pid}.tmp`;
+  writeFileSync(tmpPath, `${JSON.stringify(valid, null, 2)}\n`, { encoding: "utf8" });
+  renameSync(tmpPath, CATALOG_PATH);
 }
 
 export function getProducts(): Product[] {
-  return catalog.products;
+  return getCatalog().products;
 }
 
 export function getProductBySlug(slug: string): Product | undefined {
-  return catalog.products.find((product) => product.slug === slug);
+  return getCatalog().products.find((product) => product.slug === slug);
 }
 
 // Oferty produktu: najpierw dostępne, potem od najniższej ceny za jednostkę.
 export function getRankedOffers(slug: string): RankedOffer[] {
-  const product = getProductBySlug(slug);
+  const catalog = getCatalog();
+  const product = catalog.products.find((item) => item.slug === slug);
   if (!product) return [];
 
   const shopNames = new Map(catalog.shops.map((shop) => [shop.id, shop.name]));
@@ -29,6 +42,7 @@ export function getRankedOffers(slug: string): RankedOffer[] {
     .filter((offer) => offer.productSlug === slug)
     .map((offer) => ({
       ...offer,
+      url: safeHref(offer.url),
       shopName: shopNames.get(offer.shopId) ?? offer.shopId,
       pricePerKg: unitPrice(offer.price, product.netWeightG),
     }))
@@ -37,8 +51,4 @@ export function getRankedOffers(slug: string): RankedOffer[] {
 
 export function getBestOffer(slug: string): RankedOffer | undefined {
   return getRankedOffers(slug).find((offer) => offer.inStock);
-}
-
-export function getShopCount(): number {
-  return catalog.shops.length;
 }

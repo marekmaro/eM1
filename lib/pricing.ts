@@ -7,9 +7,11 @@ export function unitPrice(price: number, netWeightG: number): number {
 }
 
 export function formatPLN(value: number): string {
+  if (!Number.isFinite(value)) return "—";
   return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(value);
 }
 
 export function formatUnitPrice(value: number): string {
+  if (!Number.isFinite(value)) return "—";
   return `${formatPLN(value)}/${niche.unit.label}`;
 }

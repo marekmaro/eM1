@@ -4,8 +4,10 @@ import { useState } from "react";
 import { formatPLN } from "@/lib/pricing";
 
 // Koszt materiału = cena szpuli / masa szpuli × zużycie w wydruku.
-export function materialCost(spoolPrice: number, spoolWeightG: number, usedG: number): number {
-  if (spoolWeightG <= 0) return 0;
+// Zwraca null, gdy wejście nie ma sensu (zero, ujemne, NaN lub zbyt duża wartość).
+export function materialCost(spoolPrice: number, spoolWeightG: number, usedG: number): number | null {
+  const valid = [spoolPrice, spoolWeightG, usedG].every((value) => Number.isFinite(value) && value >= 0);
+  if (!valid || spoolWeightG === 0 || spoolPrice > 100000 || usedG > 100000) return null;
   return Math.round((spoolPrice / spoolWeightG) * usedG * 100) / 100;
 }
 
@@ -17,12 +19,12 @@ export function PrintCostCalculator() {
   const cost = materialCost(Number(spoolPrice), Number(spoolWeight), Number(usedG));
 
   return (
-    <div className="card" style={{ maxWidth: 480 }}>
+    <div className="card calculator">
       <Field id="spool-price" label="Cena szpuli (zł)" value={spoolPrice} onChange={setSpoolPrice} />
       <Field id="spool-weight" label="Masa szpuli (g)" value={spoolWeight} onChange={setSpoolWeight} />
       <Field id="used" label="Zużycie w wydruku (g)" value={usedG} onChange={setUsedG} />
       <div className="muted">Koszt materiału</div>
-      <div className="result">{formatPLN(cost)}</div>
+      <div className="result">{cost === null ? "Sprawdź wartości" : formatPLN(cost)}</div>
     </div>
   );
 }
@@ -41,7 +43,15 @@ function Field({
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      <input id={id} type="number" min="0" step="any" inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} />
+      <input
+        id={id}
+        type="number"
+        min="0"
+        step="any"
+        inputMode="decimal"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </div>
   );
 }
