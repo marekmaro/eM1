@@ -17,7 +17,28 @@ npm run typecheck
 npm run build && npm start   # wersja produkcyjna
 ```
 
-Wymagany Node.js 20.9 lub nowszy (Next.js 16).
+Wymagany Node.js 20.9 lub nowszy (Next.js 16). Zalecany Node.js 22 LTS.
+
+### Uruchomienie w VS Code (Windows, macOS, Linux)
+
+1. Zainstaluj Node.js 22 LTS z nodejs.org oraz Git.
+2. W VS Code: `File → Open Folder`, wskaż katalog projektu. Otwórz terminal: `Terminal → New Terminal`.
+3. W terminalu:
+   ```bash
+   npm install
+   ```
+4. Skopiuj plik z kluczami i uzupełnij go:
+   - macOS/Linux: `cp .env.example .env.local`
+   - Windows PowerShell: `Copy-Item .env.example .env.local`
+   
+   W `.env.local` wpisz `ADMIN_PASSWORD` i `ADMIN_SESSION_SECRET`. Losowy sekret wygenerujesz poleceniem
+   `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+5. Uruchom serwer deweloperski: `npm run dev`, albo w panelu **Run and Debug** wybierz „Nitkomat: serwer deweloperski”
+   i naciśnij F5. Otworzy się `http://localhost:3000`.
+6. Panel admina: `http://localhost:3000/admin/login`. Hasło to wartość `ADMIN_PASSWORD`.
+
+Konfiguracja `.vscode/` ustawia TypeScript z projektu (`typescript.tsdk`), więc podpowiedzi zgadzają się z kodem.
+Plik `.env.local` jest w `.gitignore`, nie trafi do repozytorium.
 
 ## Wdrożenie
 

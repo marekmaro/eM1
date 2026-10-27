@@ -1,0 +1,12 @@
+{
+  // Edytor używa TypeScriptu z projektu, nie wbudowanego w VS Code. Typy Next.js i React zgadzają się wtedy z kodem.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "files.exclude": {
+    "**/.next": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/package-lock.json": true
+  }
+}

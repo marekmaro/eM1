@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Uruchamia serwer deweloperski w terminalu VS Code i otwiera przeglądarkę, gdy serwer wstanie.
+      "name": "Nitkomat: serwer deweloperski",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "serverReadyAction": {
+        "pattern": "Local:\\s+(https?://\\S+)",
+        "uriFormat": "%s/",
+        "action": "openExternally"
+      }
+    },
+    {
+      // Uruchamia kompilację i serwer produkcyjny, żeby sprawdzić zachowanie przed wdrożeniem.
+      "name": "Nitkomat: build i start produkcyjny",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "serverReadyAction": {
+        "pattern": "Local:\\s+(https?://\\S+)",
+        "uriFormat": "%s/",
+        "action": "openExternally"
+      }
+    }
+  ]
+}
